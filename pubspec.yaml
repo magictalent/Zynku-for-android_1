@@ -26,6 +26,7 @@ dependencies:
   geolocator: ^13.0.1
   permission_handler: ^11.3.1
   speech_to_text: ^7.0.0
+  shared_preferences: ^2.2.2
 
 dev_dependencies:
   flutter_test:

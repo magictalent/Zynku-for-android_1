@@ -22,11 +22,6 @@ class _UserdetailsWidgetState extends State<UserdetailsWidget>
   }
 
   @override
-  void dispose() {
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
@@ -73,10 +68,13 @@ class _UserdetailsWidgetState extends State<UserdetailsWidget>
                     children: [
                       Container(
                         height: 400,
+                        decoration: BoxDecoration(),
+                        clipBehavior: Clip.hardEdge,
                         child: Stack(
+                          clipBehavior: Clip.hardEdge,
                           children: [
                             Image.asset(
-                              'assets/images/Screenshot_35.jpg',
+                              'assets/images/avatar_woman.png',
                               width: double.infinity,
                               height: 385,
                               fit: BoxFit.cover,
@@ -85,34 +83,25 @@ class _UserdetailsWidgetState extends State<UserdetailsWidget>
                               mainAxisSize: MainAxisSize.max,
                               mainAxisAlignment: MainAxisAlignment.end,
                               children: [
-                                Stack(
-                                  children: [
-                                    ClipRRect(
-                                      borderRadius: BorderRadius.circular(0),
-                                      child: BackdropFilter(
-                                        filter: ImageFilter.blur(
-                                          sigmaX: 4,
-                                          sigmaY: 4,
-                                        ),
-                                        child: Container(
-                                          width: MediaQuery.sizeOf(
-                                            context,
-                                          ).width,
-                                          height: 90,
-                                          decoration: BoxDecoration(
-                                            color: Color(0x63F4F4F4),
-                                          ),
-                                        ),
-                                      ),
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(0),
+                                  child: BackdropFilter(
+                                    filter: ImageFilter.blur(
+                                      sigmaX: 4,
+                                      sigmaY: 4,
                                     ),
-                                    Container(
+                                    child: Container(
                                       width: MediaQuery.sizeOf(context).width,
                                       height: 90,
+                                      constraints: BoxConstraints(
+                                        maxHeight: 90,
+                                        minHeight: 90,
+                                      ),
                                       decoration: BoxDecoration(
-                                        color: Color(0x06FFFFFF),
+                                        color: Color(0x63F4F4F4),
                                       ),
                                       child: Column(
-                                        mainAxisSize: MainAxisSize.max,
+                                        mainAxisSize: MainAxisSize.min,
                                         mainAxisAlignment:
                                             MainAxisAlignment.center,
                                         children: [
@@ -130,9 +119,12 @@ class _UserdetailsWidgetState extends State<UserdetailsWidget>
                                                     context,
                                                   ).width *
                                                   0.9,
+                                              constraints: BoxConstraints(
+                                                maxHeight: 80,
+                                              ),
                                               decoration: BoxDecoration(),
                                               child: Column(
-                                                mainAxisSize: MainAxisSize.max,
+                                                mainAxisSize: MainAxisSize.min,
                                                 crossAxisAlignment:
                                                     CrossAxisAlignment.start,
                                                 children: [
@@ -198,7 +190,7 @@ class _UserdetailsWidgetState extends State<UserdetailsWidget>
                                                                 0,
                                                               ),
                                                           child: Container(
-                                                            height: 25,
+                                                            height: 15,
                                                             decoration:
                                                                 BoxDecoration(
                                                                   color: Color(
@@ -231,7 +223,7 @@ class _UserdetailsWidgetState extends State<UserdetailsWidget>
                                                                           FontWeight
                                                                               .w500,
                                                                       fontSize:
-                                                                          14,
+                                                                          10,
                                                                     ),
                                                                   ),
                                                                 ],
@@ -249,7 +241,7 @@ class _UserdetailsWidgetState extends State<UserdetailsWidget>
                                         ],
                                       ),
                                     ),
-                                  ],
+                                  ),
                                 ),
                                 Container(
                                   width: MediaQuery.sizeOf(context).width,
@@ -486,9 +478,7 @@ class _UserdetailsWidgetState extends State<UserdetailsWidget>
                                                                     size: 30,
                                                                   ),
                                                                   onPressed: () {
-                                                                    print(
-                                                                      'IconButton pressed ...',
-                                                                    );
+                                                                    // Resume button pressed
                                                                   },
                                                                 ),
                                                                 Text(
@@ -706,27 +696,6 @@ class _UserdetailsWidgetState extends State<UserdetailsWidget>
                           ],
                         ),
                       ),
-                      Padding(
-                        padding: EdgeInsetsDirectional.fromSTEB(0, 30, 0, 0),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.max,
-                          children: [
-                            Align(
-                              alignment: AlignmentDirectional(0, 0.15),
-                              child: SelectionArea(
-                                child: Text(
-                                  'SKILLS',
-                                  style: GoogleFonts.montserrat(
-                                    color: Color(0xFF021C27),
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
                     ],
                   ),
                 ),
@@ -784,7 +753,7 @@ class _UserdetailsWidgetState extends State<UserdetailsWidget>
                           ),
                           ElevatedButton.icon(
                             onPressed: () {
-                              print('Button pressed ...');
+                              // Edit button pressed
                             },
                             icon: Icon(Icons.edit_square, size: 15),
                             label: Text('Edit'),
