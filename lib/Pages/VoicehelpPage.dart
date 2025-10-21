@@ -702,9 +702,11 @@ class _VoicepageWidgetState extends State<VoicepageWidget> {
                                           },
                                           child: Icon(
                                             Icons.home,
+
                                             color: FlutterFlowTheme.of(
                                               context,
                                             ).secondaryBackground,
+
                                             size: 26,
                                           ),
                                         ),
@@ -716,12 +718,26 @@ class _VoicepageWidgetState extends State<VoicepageWidget> {
                                           0,
                                           0,
                                         ),
-                                        child: Icon(
-                                          Icons.watch_later_rounded,
-                                          color: FlutterFlowTheme.of(
-                                            context,
-                                          ).secondaryBackground,
-                                          size: 26,
+                                        child: InkWell(
+                                          splashColor: Colors.transparent,
+                                          focusColor: Colors.transparent,
+                                          hoverColor: Colors.transparent,
+                                          highlightColor: Colors.transparent,
+                                          onTap: () async {
+                                            Navigator.pushNamed(
+                                              context,
+                                              '/chats',
+                                            );
+                                          },
+                                          child: Icon(
+                                            Icons.message,
+
+                                            color: FlutterFlowTheme.of(
+                                              context,
+                                            ).secondaryBackground,
+
+                                            size: 26,
+                                          ),
                                         ),
                                       ),
                                       Padding(
@@ -731,12 +747,26 @@ class _VoicepageWidgetState extends State<VoicepageWidget> {
                                           0,
                                           0,
                                         ),
-                                        child: Icon(
-                                          Icons.people_alt_rounded,
-                                          color: FlutterFlowTheme.of(
-                                            context,
-                                          ).secondaryBackground,
-                                          size: 26,
+                                        child: InkWell(
+                                          splashColor: Colors.transparent,
+                                          focusColor: Colors.transparent,
+                                          hoverColor: Colors.transparent,
+                                          highlightColor: Colors.transparent,
+                                          onTap: () async {
+                                            Navigator.pushNamed(
+                                              context,
+                                              '/maps',
+                                            );
+                                          },
+                                          child: Icon(
+                                            Icons.person_pin_circle_sharp,
+
+                                            color: FlutterFlowTheme.of(
+                                              context,
+                                            ).secondaryBackground,
+
+                                            size: 26,
+                                          ),
                                         ),
                                       ),
                                       Padding(
@@ -746,12 +776,26 @@ class _VoicepageWidgetState extends State<VoicepageWidget> {
                                           0,
                                           0,
                                         ),
-                                        child: Icon(
-                                          Icons.person,
-                                          color: FlutterFlowTheme.of(
-                                            context,
-                                          ).secondaryBackground,
-                                          size: 26,
+                                        child: InkWell(
+                                          splashColor: Colors.transparent,
+                                          focusColor: Colors.transparent,
+                                          hoverColor: Colors.transparent,
+                                          highlightColor: Colors.transparent,
+                                          onTap: () async {
+                                            Navigator.pushNamed(
+                                              context,
+                                              '/profile',
+                                            );
+                                          },
+                                          child: Icon(
+                                            Icons.person,
+
+                                            color: FlutterFlowTheme.of(
+                                              context,
+                                            ).secondaryBackground,
+
+                                            size: 26,
+                                          ),
                                         ),
                                       ),
                                     ],

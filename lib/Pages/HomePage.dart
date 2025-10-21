@@ -83,47 +83,47 @@ class _HomePageWidgetState extends State<HomePageWidget> {
                 ),
               ),
             ),
-            Padding(
-              padding: EdgeInsetsDirectional.fromSTEB(75, 0, 0, 0),
-              child: Row(
-                mainAxisSize: MainAxisSize.max,
-                children: [
-                  Align(
-                    alignment: AlignmentDirectional(0, -1),
-                    child: Padding(
-                      padding: EdgeInsetsDirectional.fromSTEB(0, 40, 0, 0),
-                      child: Text(
-                        'Hey Zynku!',
-                        style: FlutterFlowTheme.of(context).displayMedium
-                            .override(
-                              font: GoogleFonts.interTight(
-                                fontWeight: FlutterFlowTheme.of(
-                                  context,
-                                ).displayMedium.fontWeight,
-                                fontStyle: FlutterFlowTheme.of(
-                                  context,
-                                ).displayMedium.fontStyle,
-                              ),
-                              fontSize: 50,
-                              letterSpacing: 0.0,
-                              fontWeight: FlutterFlowTheme.of(
-                                context,
-                              ).displayMedium.fontWeight,
-                              fontStyle: FlutterFlowTheme.of(
-                                context,
-                              ).displayMedium.fontStyle,
-                            ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
+            // Padding(
+            //   padding: EdgeInsetsDirectional.fromSTEB(75, 0, 0, 0),
+            //   child: Row(
+            //     mainAxisSize: MainAxisSize.max,
+            //     children: [
+            //       Align(
+            //         alignment: AlignmentDirectional(0, -1),
+            //         child: Padding(
+            //           padding: EdgeInsetsDirectional.fromSTEB(0, 40, 0, 0),
+            //           child: Text(
+            //             'Hey Zynku!',
+            //             style: FlutterFlowTheme.of(context).displayMedium
+            //                 .override(
+            //                   font: GoogleFonts.interTight(
+            //                     fontWeight: FlutterFlowTheme.of(
+            //                       context,
+            //                     ).displayMedium.fontWeight,
+            //                     fontStyle: FlutterFlowTheme.of(
+            //                       context,
+            //                     ).displayMedium.fontStyle,
+            //                   ),
+            //                   fontSize: 50,
+            //                   letterSpacing: 0.0,
+            //                   fontWeight: FlutterFlowTheme.of(
+            //                     context,
+            //                   ).displayMedium.fontWeight,
+            //                   fontStyle: FlutterFlowTheme.of(
+            //                     context,
+            //                   ).displayMedium.fontStyle,
+            //                 ),
+            //           ),
+            //         ),
+            //       ),
+            //     ],
+            //   ),
+            // ),
             Column(
               mainAxisSize: MainAxisSize.max,
               children: [
                 Padding(
-                  padding: EdgeInsetsDirectional.fromSTEB(15, 15, 0, 0),
+                  padding: EdgeInsetsDirectional.fromSTEB(15, 30, 0, 0),
                   child: Text(
                     'One Voice, One Commuinity.',
                     style: FlutterFlowTheme.of(context).titleSmall.override(
@@ -146,13 +146,23 @@ class _HomePageWidgetState extends State<HomePageWidget> {
                     ),
                   ),
                 ),
+                Center(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 28.0),
+                    child: Image.asset(
+                      'assets/images/mark.png',
+                      height: 250,
+                      fit: BoxFit.contain,
+                    ),
+                  ),
+                ),
                 Padding(
                   padding: EdgeInsetsDirectional.fromSTEB(0, 20, 0, 0),
                   child: FFButtonWidget(
                     onPressed: () async {
-                      Navigator.pushNamed(context, '/auth');
+                      Navigator.pushNamed(context, '/board-slide-show');
                     },
-                    text: 'Use my live location',
+                    text: 'Get Started',
                     icon: Icon(Icons.room, size: 20),
                     options: FFButtonOptions(
                       width: 300,
@@ -186,137 +196,6 @@ class _HomePageWidgetState extends State<HomePageWidget> {
                       borderRadius: BorderRadius.circular(14),
                     ),
                   ),
-                ),
-                Padding(
-                  padding: EdgeInsetsDirectional.fromSTEB(0, 10, 0, 0),
-                  child: FFButtonWidget(
-                    onPressed: () {
-                      Navigator.pushNamed(context, '/voice-help');
-                    },
-                    text: 'Enter address manually',
-                    icon: Icon(Icons.sticky_note_2_outlined, size: 20),
-                    options: FFButtonOptions(
-                      width: 300,
-                      height: 60,
-                      padding: EdgeInsetsDirectional.fromSTEB(16, 0, 16, 0),
-                      iconPadding: EdgeInsetsDirectional.fromSTEB(0, 0, 0, 0),
-                      color: FlutterFlowTheme.of(context).secondaryBackground,
-                      textStyle: FlutterFlowTheme.of(context).titleSmall
-                          .override(
-                            font: GoogleFonts.interTight(
-                              fontWeight: FlutterFlowTheme.of(
-                                context,
-                              ).titleSmall.fontWeight,
-                              fontStyle: FlutterFlowTheme.of(
-                                context,
-                              ).titleSmall.fontStyle,
-                            ),
-                            color: FlutterFlowTheme.of(context).primaryText,
-                            fontSize: 20,
-                            letterSpacing: 0.0,
-                            fontWeight: FlutterFlowTheme.of(
-                              context,
-                            ).titleSmall.fontWeight,
-                            fontStyle: FlutterFlowTheme.of(
-                              context,
-                            ).titleSmall.fontStyle,
-                          ),
-                      elevation: 0,
-                      borderSide: BorderSide(
-                        color: FlutterFlowTheme.of(context).primaryText,
-                      ),
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                  ),
-                ),
-                Column(
-                  mainAxisSize: MainAxisSize.max,
-                  children: [
-                    Align(
-                      alignment: AlignmentDirectional(-1, -1),
-                      child: Padding(
-                        padding: EdgeInsetsDirectional.fromSTEB(40, 30, 0, 0),
-                        child: Text(
-                          'We use your location to connect your with',
-                          style: FlutterFlowTheme.of(context).displaySmall
-                              .override(
-                                font: GoogleFonts.interTight(
-                                  fontWeight: FlutterFlowTheme.of(
-                                    context,
-                                  ).displaySmall.fontWeight,
-                                  fontStyle: FlutterFlowTheme.of(
-                                    context,
-                                  ).displaySmall.fontStyle,
-                                ),
-                                fontSize: 16,
-                                letterSpacing: 0.0,
-                                fontWeight: FlutterFlowTheme.of(
-                                  context,
-                                ).displaySmall.fontWeight,
-                                fontStyle: FlutterFlowTheme.of(
-                                  context,
-                                ).displaySmall.fontStyle,
-                              ),
-                        ),
-                      ),
-                    ),
-                    Align(
-                      alignment: AlignmentDirectional(-1, -1),
-                      child: Padding(
-                        padding: EdgeInsetsDirectional.fromSTEB(40, 0, 0, 0),
-                        child: Text(
-                          'nearby services.ny contuming you',
-                          style: FlutterFlowTheme.of(context).displayMedium
-                              .override(
-                                font: GoogleFonts.interTight(
-                                  fontWeight: FlutterFlowTheme.of(
-                                    context,
-                                  ).displayMedium.fontWeight,
-                                  fontStyle: FlutterFlowTheme.of(
-                                    context,
-                                  ).displayMedium.fontStyle,
-                                ),
-                                fontSize: 16,
-                                letterSpacing: 0.0,
-                                fontWeight: FlutterFlowTheme.of(
-                                  context,
-                                ).displayMedium.fontWeight,
-                                fontStyle: FlutterFlowTheme.of(
-                                  context,
-                                ).displayMedium.fontStyle,
-                              ),
-                        ),
-                      ),
-                    ),
-                    Align(
-                      alignment: AlignmentDirectional(-1, 1),
-                      child: Padding(
-                        padding: EdgeInsetsDirectional.fromSTEB(40, 0, 0, 0),
-                        child: Text(
-                          'agree to our team & privacy',
-                          style: FlutterFlowTheme.of(context).displayMedium
-                              .override(
-                                font: GoogleFonts.interTight(
-                                  fontWeight: FlutterFlowTheme.of(
-                                    context,
-                                  ).displayMedium.fontWeight,
-                                  fontStyle: FlutterFlowTheme.of(
-                                    context,
-                                  ).displayMedium.fontStyle,
-                                ),
-                                fontSize: 16,
-                                letterSpacing: 0.0,
-                                fontWeight: FlutterFlowTheme.of(
-                                  context,
-                                ).displayMedium.fontWeight,
-                                fontStyle: FlutterFlowTheme.of(
-                                  context,
-                                ).displayMedium.fontStyle,
-                              ),
-                        ),
-                      ),
-                    ),
-                  ],
                 ),
               ],
             ),

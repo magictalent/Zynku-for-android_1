@@ -14,7 +14,7 @@ import 'Pages/SeekbuilderPage.dart' show SeekbuilderpageWidget;
 import 'Pages/NewRequestJob.dart' show NewjobrequirePageWidget;
 import 'Pages/PaymentPage.dart' show PaymentPageWidget;
 import 'Pages/ConfirmBookingPage.dart' show ConfirmBookingWidget;
-import 'Pages/PlumbingPage.dart' show PlumbingPageWidget;
+import 'Pages/PlumbingPageNew.dart' show PlumbingPageNew;
 import 'Pages/AcceptJobPage.dart' show SuccessfulPageWidget;
 import 'Pages/BookingHistory.dart' show ReviewPageWidget;
 import 'Pages/PreviousPage.dart' show FinalPageWidget;
@@ -22,18 +22,34 @@ import 'Pages/AvailbilityPage.dart' show AvailablilityPageWidget;
 import 'Pages/BookingPage.dart' show BookingPageWidget;
 import 'Pages/ChatsPage.dart' show ChatsPage;
 import 'Pages/ProfilePage.dart' show UserdetailsWidget;
+import 'Pages/JobAcceptancePage.dart' show JobAcceptancePage;
 import 'auth_wrapper.dart' show AuthWrapper;
 import 'session_manager.dart' show SessionManager;
+import 'Pages/BoardSlideShow.dart' show BoardSlideShowWidget;
+import 'widgets/page_with_bottom_nav.dart';
 //
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+    print('Firebase initialized successfully');
+  } catch (e) {
+    print('Firebase initialization error: $e');
+  }
 
   // Initialize session persistence
-  await SessionManager.initializeSessionPersistence();
+  try {
+    await SessionManager.initializeSessionPersistence();
+    print('Session persistence initialized successfully');
+  } catch (e) {
+    print('Session persistence error: $e');
+  }
 
   runApp(const MyApp());
 }
@@ -66,13 +82,29 @@ class MyApp extends StatelessWidget {
         '/new-job': (context) => NewjobrequirePageWidget(),
         '/payment': (context) => PaymentPageWidget(),
         '/confirm-booking': (context) => ConfirmBookingWidget(),
-        '/plumbing': (context) => PlumbingPageWidget(),
-        '/accept-job': (context) => SuccessfulPageWidget(),
-        '/booking-history': (context) => ReviewPageWidget(),
-        '/previous': (context) => FinalPageWidget(),
-        '/availability': (context) => AvailablilityPageWidget(),
-        '/chats': (context) => ChatsPage(),
-        '/profile': (context) => UserdetailsWidget(),
+        '/plumbing': (context) =>
+            PageWithBottomNav(currentIndex: 2, child: PlumbingPageNew()),
+        '/accept-job': (context) =>
+            PageWithBottomNav(currentIndex: 2, child: SuccessfulPageWidget()),
+        '/booking-history': (context) =>
+            PageWithBottomNav(currentIndex: 3, child: ReviewPageWidget()),
+        '/previous': (context) =>
+            PageWithBottomNav(currentIndex: 3, child: FinalPageWidget()),
+        '/availability': (context) => PageWithBottomNav(
+          currentIndex: 2,
+          child: AvailablilityPageWidget(),
+        ),
+        '/chats': (context) =>
+            PageWithBottomNav(currentIndex: 1, child: ChatsPage()),
+        '/profile': (context) =>
+            PageWithBottomNav(currentIndex: 3, child: UserdetailsWidget()),
+        '/job-acceptance': (context) {
+          final args =
+              ModalRoute.of(context)?.settings.arguments
+                  as Map<String, dynamic>?;
+          return JobAcceptancePage(jobData: args ?? {});
+        },
+        '/board-slide-show': (context) => BoardSlideShowWidget(),
         '/booking': (context) {
           final args =
               ModalRoute.of(context)?.settings.arguments

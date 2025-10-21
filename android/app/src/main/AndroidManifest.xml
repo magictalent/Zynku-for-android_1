@@ -10,7 +10,7 @@
 
     
     <application
-        android:label="vd"
+        android:label="Zynku"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

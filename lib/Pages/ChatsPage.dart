@@ -1,353 +1,773 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'dart:async';
+import '../services/message_service.dart';
+import '../services/user_profile_service.dart';
 
 class ChatsPage extends StatefulWidget {
-  const ChatsPage({Key? key}) : super(key: key);
+  const ChatsPage({super.key});
 
   @override
-  _ChatsPageState createState() => _ChatsPageState();
+  State<ChatsPage> createState() => _ChatsPageState();
 }
 
 class _ChatsPageState extends State<ChatsPage> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final TextEditingController _messageController = TextEditingController();
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
 
   // Real-time customer data
   List<Map<String, dynamic>> customers = [];
   List<Map<String, dynamic>> messages = [];
   int selectedChatIndex = 0;
-  bool _isLoading = true;
+  StreamSubscription<QuerySnapshot>? _messagesSubscription;
 
   @override
   void initState() {
     super.initState();
-    _initializeRealData();
     _loadCustomers();
+    // Start message listener after a short delay to ensure customers are loaded
+    Future.delayed(Duration(milliseconds: 500), () {
+      if (customers.isNotEmpty) {
+        _startMessageListener();
+      }
+    });
   }
 
   @override
   void dispose() {
     _messageController.dispose();
+    _messagesSubscription?.cancel();
     super.dispose();
   }
 
-  // Initialize real data in Firestore
-  Future<void> _initializeRealData() async {
-    try {
-      // Check if customers already exist
-      final customersSnapshot = await _firestore.collection('customers').get();
-
-      if (customersSnapshot.docs.isEmpty) {
-        // Create real customers
-        await _createRealCustomers();
-        await _createRealMessages();
-      }
-    } catch (e) {
-      print('Error initializing data: $e');
-    }
-  }
-
-  // Create real customers in Firestore
-  Future<void> _createRealCustomers() async {
-    final realCustomers = [
-      {
-        'name': 'Sarah Mitchell',
-        'lastMessage': "Hi, I need help with my bathroom renovation.",
-        'avatar': null,
-        'unreadCount': 3,
-        'timestamp': FieldValue.serverTimestamp(),
-        'phone': '+1-555-0123',
-        'email': 'sarah.mitchell@email.com',
-        'address': '123 Oak Street, Springfield',
-      },
-      {
-        'name': 'Michael Chen',
-        'lastMessage': "The pipe is still leaking after your visit.",
-        'avatar': null,
-        'unreadCount': 1,
-        'timestamp': FieldValue.serverTimestamp(),
-        'phone': '+1-555-0456',
-        'email': 'michael.chen@email.com',
-        'address': '456 Pine Avenue, Springfield',
-      },
-      {
-        'name': 'Emily Rodriguez',
-        'lastMessage': "Thank you for fixing the kitchen sink!",
-        'avatar': null,
-        'unreadCount': 0,
-        'timestamp': FieldValue.serverTimestamp(),
-        'phone': '+1-555-0789',
-        'email': 'emily.rodriguez@email.com',
-        'address': '789 Maple Drive, Springfield',
-      },
-      {
-        'name': 'David Thompson',
-        'lastMessage': "Can you come tomorrow for the bathroom repair?",
-        'avatar': null,
-        'unreadCount': 2,
-        'timestamp': FieldValue.serverTimestamp(),
-        'phone': '+1-555-0321',
-        'email': 'david.thompson@email.com',
-        'address': '321 Elm Street, Springfield',
-      },
-      {
-        'name': 'Lisa Johnson',
-        'lastMessage': "The water heater is making strange noises.",
-        'avatar': null,
-        'unreadCount': 1,
-        'timestamp': FieldValue.serverTimestamp(),
-        'phone': '+1-555-0654',
-        'email': 'lisa.johnson@email.com',
-        'address': '654 Cedar Lane, Springfield',
-      },
-    ];
-
-    for (var customer in realCustomers) {
-      await _firestore.collection('customers').add(customer);
-    }
-  }
-
-  // Create real messages for customers
-  Future<void> _createRealMessages() async {
-    final customersSnapshot = await _firestore.collection('customers').get();
-
-    for (int i = 0; i < customersSnapshot.docs.length; i++) {
-      final customerDoc = customersSnapshot.docs[i];
-      final customerId = customerDoc.id;
-
-      // Create different conversation threads for each customer
-      final messageThreads = [
-        [
-          {
-            'text': "Hi, I need help with my bathroom renovation.",
-            'fromMe': false,
-            'timestamp': FieldValue.serverTimestamp(),
-          },
-          {
-            'text':
-                "Hello! I'd be happy to help with your bathroom renovation. What specific work do you need done?",
-            'fromMe': true,
-            'timestamp': FieldValue.serverTimestamp(),
-          },
-          {
-            'text':
-                "I need to replace the bathtub and install new tiles. The current setup is quite old.",
-            'fromMe': false,
-            'timestamp': FieldValue.serverTimestamp(),
-          },
-          {
-            'text':
-                "I can definitely help with that. When would be a good time for me to come and assess the current situation?",
-            'fromMe': true,
-            'timestamp': FieldValue.serverTimestamp(),
-          },
-        ],
-        [
-          {
-            'text': "The pipe is still leaking after your visit.",
-            'fromMe': false,
-            'timestamp': FieldValue.serverTimestamp(),
-          },
-          {
-            'text':
-                "I'm sorry to hear that. Let me come back and check what might have gone wrong.",
-            'fromMe': true,
-            'timestamp': FieldValue.serverTimestamp(),
-          },
-          {
-            'text':
-                "That would be great. The leak is getting worse and I'm worried about water damage.",
-            'fromMe': false,
-            'timestamp': FieldValue.serverTimestamp(),
-          },
-        ],
-        [
-          {
-            'text': "Thank you for fixing the kitchen sink!",
-            'fromMe': false,
-            'timestamp': FieldValue.serverTimestamp(),
-          },
-          {
-            'text':
-                "You're very welcome! I'm glad I could help. How is everything working now?",
-            'fromMe': true,
-            'timestamp': FieldValue.serverTimestamp(),
-          },
-          {
-            'text':
-                "Perfect! The water pressure is much better and no more leaks.",
-            'fromMe': false,
-            'timestamp': FieldValue.serverTimestamp(),
-          },
-        ],
-        [
-          {
-            'text': "Can you come tomorrow for the bathroom repair?",
-            'fromMe': false,
-            'timestamp': FieldValue.serverTimestamp(),
-          },
-          {
-            'text': "Yes, I can come tomorrow. What time works best for you?",
-            'fromMe': true,
-            'timestamp': FieldValue.serverTimestamp(),
-          },
-          {
-            'text': "How about 10 AM? I'll be home all morning.",
-            'fromMe': false,
-            'timestamp': FieldValue.serverTimestamp(),
-          },
-          {
-            'text': "10 AM works perfectly. I'll see you then!",
-            'fromMe': true,
-            'timestamp': FieldValue.serverTimestamp(),
-          },
-        ],
-        [
-          {
-            'text': "The water heater is making strange noises.",
-            'fromMe': false,
-            'timestamp': FieldValue.serverTimestamp(),
-          },
-          {
-            'text':
-                "That doesn't sound good. Strange noises from a water heater can indicate several issues. When did you first notice this?",
-            'fromMe': true,
-            'timestamp': FieldValue.serverTimestamp(),
-          },
-          {
-            'text': "It started yesterday evening. It's a loud banging sound.",
-            'fromMe': false,
-            'timestamp': FieldValue.serverTimestamp(),
-          },
-        ],
-      ];
-
-      if (i < messageThreads.length) {
-        for (var message in messageThreads[i]) {
-          await _firestore
-              .collection('chats')
-              .doc(customerId)
-              .collection('messages')
-              .add(message);
-        }
-      }
-    }
-  }
-
-  // Load customers from Firestore
+  // Load customers from Firestore who have actual chat conversations
   Future<void> _loadCustomers() async {
     try {
-      final snapshot = await _firestore
-          .collection('customers')
-          .orderBy('timestamp', descending: true)
-          .get();
-      setState(() {
-        customers = snapshot.docs.map((doc) {
+      final user = _auth.currentUser;
+      if (user == null) return;
+
+      Map<String, Map<String, dynamic>> customerMap = {};
+
+      // Get all messages where this builder is involved (either as sender or recipient)
+      // First, get messages sent by this builder
+      try {
+        final builderMessagesSnapshot = await _firestore
+            .collection('builder_messages')
+            .where('senderId', isEqualTo: user.uid)
+            .where('senderType', isEqualTo: 'builder')
+            .get();
+
+        // Process builder messages (messages sent by this builder)
+        for (var doc in builderMessagesSnapshot.docs) {
           final data = doc.data();
-          return {
-            'id': doc.id,
-            'name': data['name'] ?? 'Unknown',
-            'lastMessage': data['lastMessage'] ?? '',
-            'avatar': data['avatar'],
-            'unreadCount': data['unreadCount'] ?? 0,
-            'timestamp': data['timestamp'],
-            'phone': data['phone'],
-            'email': data['email'],
-            'address': data['address'],
-          };
-        }).toList();
-        _isLoading = false;
-      });
+          final customerId = data['customerId'];
+
+          if (customerId != null) {
+            // Get real customer name from user profile
+            String customerName = await _getCustomerName(customerId);
+
+            customerMap[customerId] = {
+              'id': customerId,
+              'name': customerName,
+              'lastMessage': data['text'] ?? 'No messages yet',
+              'timestamp': data['createdAt'],
+              'unreadCount': 0,
+              'source': 'builder_messages',
+            };
+          }
+        }
+      } catch (e) {
+        print('Error loading builder messages: $e');
+      }
+
+      // Also get messages from customers to this builder
+      // We need to get all messages and filter for ones where this builder is the recipient
+      try {
+        final allMessagesSnapshot = await _firestore
+            .collection('builder_messages')
+            .where('senderType', isEqualTo: 'customer')
+            .get();
+
+        // Process customer messages and find ones directed to this builder
+        for (var doc in allMessagesSnapshot.docs) {
+          final data = doc.data();
+          final customerId =
+              data['senderId']; // In customer messages, senderId is the customer
+
+          // Check if this message is directed to this builder
+          // We'll assume messages are directed to builders if they have a specific field
+          // or if we can determine the relationship from the data
+          if (customerId != null && customerId != user.uid) {
+            // Get real customer name from user profile
+            String customerName = await _getCustomerName(customerId);
+
+            // Update or add customer to the map
+            if (!customerMap.containsKey(customerId)) {
+              customerMap[customerId] = {
+                'id': customerId,
+                'name': customerName,
+                'lastMessage': data['text'] ?? 'No messages yet',
+                'timestamp': data['createdAt'],
+                'unreadCount': 0,
+                'source': 'builder_messages',
+              };
+            } else {
+              // Update with the latest message if this one is newer
+              final existingTimestamp = customerMap[customerId]!['timestamp'];
+              final currentTimestamp = data['createdAt'];
+
+              if (currentTimestamp != null && existingTimestamp != null) {
+                if (currentTimestamp is Timestamp &&
+                    existingTimestamp is Timestamp) {
+                  if (currentTimestamp.compareTo(existingTimestamp) > 0) {
+                    customerMap[customerId]!['lastMessage'] =
+                        data['text'] ?? 'No messages yet';
+                    customerMap[customerId]!['timestamp'] = currentTimestamp;
+                  }
+                }
+              }
+            }
+          }
+        }
+      } catch (e) {
+        print('Error loading customer messages: $e');
+      }
+
+      // Also check the chats collection for job-related conversations
+      try {
+        final chatsSnapshot = await _firestore
+            .collection('chats')
+            .where('builderId', isEqualTo: user.uid)
+            .get();
+
+        // Process chats collection
+        for (var doc in chatsSnapshot.docs) {
+          final data = doc.data();
+          final customerId = data['customerId'];
+
+          if (customerId != null) {
+            // Get real customer name from user profile
+            String customerName = await _getCustomerName(customerId);
+
+            // Add or update customer from chats collection
+            if (!customerMap.containsKey(customerId)) {
+              customerMap[customerId] = {
+                'id': customerId,
+                'name': customerName,
+                'lastMessage': data['lastMessage'] ?? 'No messages yet',
+                'timestamp': data['lastMessageTime'],
+                'unreadCount': 0,
+                'source': 'chats',
+              };
+            }
+          }
+        }
+      } catch (e) {
+        print('Error loading chats: $e');
+      }
+
+      if (mounted) {
+        setState(() {
+          customers = customerMap.values.toList();
+          // Sort by timestamp (most recent first)
+          customers.sort((a, b) {
+            final aTime = a['timestamp'];
+            final bTime = b['timestamp'];
+            if (aTime == null && bTime == null) return 0;
+            if (aTime == null) return 1;
+            if (bTime == null) return -1;
+
+            if (aTime is Timestamp && bTime is Timestamp) {
+              return bTime.compareTo(aTime); // Descending order
+            }
+            return 0;
+          });
+        });
+
+        // Debug information
+        print('=== CUSTOMER LOADING RESULT ===');
+        print('Loaded ${customers.length} customers:');
+        for (int i = 0; i < customers.length; i++) {
+          var customer = customers[i];
+          print(
+            'Customer $i: ${customer['name']} (${customer['source']}): ${customer['lastMessage']}',
+          );
+          print('  - ID: ${customer['id']}');
+          print('  - Timestamp: ${customer['timestamp']}');
+        }
+
+        // Start message listener for the first customer if available
+        if (customers.isNotEmpty) {
+          print(
+            'Starting message listener for customer: ${customers[selectedChatIndex]['name']}',
+          );
+          _loadInitialMessages(); // Load existing messages first
+          _startMessageListener();
+        } else {
+          print('No customers found - showing empty state');
+        }
+
+        // Always try to load messages from all possible sources
+        _tryLoadAllMessages();
+      }
     } catch (e) {
       print('Error loading customers: $e');
+      if (mounted) {
+        setState(() {
+          customers = [];
+        });
+      }
+    }
+  }
+
+  // Get real customer name from user profile
+  Future<String> _getCustomerName(String customerId) async {
+    try {
+      return await UserProfileService.getUserDisplayName(customerId);
+    } catch (e) {
+      print('Error getting customer name for $customerId: $e');
+      return 'Customer';
+    }
+  }
+
+  // Start real-time message listening
+  void _startMessageListener() {
+    if (customers.isEmpty || selectedChatIndex >= customers.length) {
+      return;
+    }
+
+    final customerId = customers[selectedChatIndex]['id'];
+    final user = _auth.currentUser;
+    if (user == null) return;
+
+    // Cancel existing subscription
+    _messagesSubscription?.cancel();
+
+    // Check if this conversation is from the 'chats' collection
+    if (customers[selectedChatIndex]['source'] == 'chats') {
+      // Listen to chats collection for real-time updates
+      _messagesSubscription = _firestore
+          .collection('chats')
+          .where('builderId', isEqualTo: user.uid)
+          .where('customerId', isEqualTo: customerId)
+          .snapshots()
+          .listen((snapshot) {
+            if (mounted && snapshot.docs.isNotEmpty) {
+              _loadChatMessages(customerId, user.uid, snapshot.docs.first.id);
+            }
+          });
+    } else {
+      // Listen to builder_messages collection for real-time updates
+      _messagesSubscription = _firestore
+          .collection('builder_messages')
+          .snapshots()
+          .listen((snapshot) {
+            if (mounted) {
+              _processRealtimeMessages(snapshot, customerId, user.uid);
+            }
+          });
+    }
+  }
+
+  // Get the display name for the current customer
+  String _getCustomerDisplayName() {
+    if (customers.isEmpty || selectedChatIndex >= customers.length) {
+      return 'Customer';
+    }
+    return customers[selectedChatIndex]['name'] ?? 'Customer';
+  }
+
+  // Try to load messages from all possible sources
+  Future<void> _tryLoadAllMessages() async {
+    final user = _auth.currentUser;
+    if (user == null) return;
+
+    print('=== TRYING TO LOAD ALL MESSAGES ===');
+
+    try {
+      // Try to get all messages from builder_messages collection
+      final allMessagesSnapshot = await _firestore
+          .collection('builder_messages')
+          .get();
+
+      print(
+        'Found ${allMessagesSnapshot.docs.length} total messages in builder_messages',
+      );
+
+      // Show all messages for debugging
+      for (var doc in allMessagesSnapshot.docs) {
+        final data = doc.data();
+        print(
+          'All message: ${data['senderId']} -> ${data['customerId']} (${data['senderType']}): "${data['text']}"',
+        );
+      }
+
+      // If we have customers, try to load messages for the first one
+      if (customers.isNotEmpty) {
+        final customerId = customers[selectedChatIndex]['id'];
+        print('Trying to load messages for customer: $customerId');
+        _processRealtimeMessages(allMessagesSnapshot, customerId, user.uid);
+      }
+
+      // Force load all messages regardless of customer selection
+      _forceLoadAllMessages(allMessagesSnapshot, user.uid);
+    } catch (e) {
+      print('Error in _tryLoadAllMessages: $e');
+    }
+  }
+
+  // Force load all messages and show them
+  void _forceLoadAllMessages(QuerySnapshot snapshot, String userId) {
+    print('=== FORCE LOADING ALL MESSAGES ===');
+    List<Map<String, dynamic>> allMessages = [];
+
+    // Get current customer ID if available
+    String? currentCustomerId;
+    if (customers.isNotEmpty && selectedChatIndex < customers.length) {
+      currentCustomerId = customers[selectedChatIndex]['id'];
+      print('Filtering messages for customer: $currentCustomerId');
+    }
+
+    for (var doc in snapshot.docs) {
+      final data = doc.data() as Map<String, dynamic>;
+      final messageCustomerId = data['customerId'];
+      final messageSenderId = data['senderId'];
+      final messageSenderType = data['senderType'];
+      final messageText = data['text'] ?? '';
+
+      // Determine if this is from the current user or a customer
+      bool isFromMe = messageSenderId == userId;
+
+      // If we have a current customer, filter messages for that customer
+      bool shouldInclude = true;
+      if (currentCustomerId != null) {
+        // More permissive filtering - include messages where:
+        // 1. Builder sent to this customer
+        // 2. Customer sent (any message from this customer)
+        // 3. Any message involving this customer
+        shouldInclude =
+            // Builder to customer
+            (messageCustomerId == currentCustomerId &&
+                messageSenderId == userId) ||
+            // Customer to builder (any senderType)
+            (messageSenderId == currentCustomerId) ||
+            // Any message with this customer ID
+            (messageCustomerId == currentCustomerId);
+
+        print(
+          'Message check: customerId=$currentCustomerId, messageCustomerId=$messageCustomerId, messageSenderId=$messageSenderId, shouldInclude=$shouldInclude',
+        );
+      }
+
+      if (shouldInclude) {
+        print(
+          'Force loading: senderId=$messageSenderId, customerId=$messageCustomerId, senderType=$messageSenderType, isFromMe=$isFromMe, text="$messageText"',
+        );
+
+        allMessages.add({
+          'id': doc.id,
+          'text': messageText,
+          'fromMe': isFromMe,
+          'time': _formatTime(data['createdAt']),
+          'timestamp': data['createdAt'],
+        });
+      }
+    }
+
+    print(
+      'Force loaded ${allMessages.length} messages for customer: $currentCustomerId',
+    );
+
+    // If no messages found for this customer, try loading all messages as fallback
+    if (allMessages.isEmpty && currentCustomerId != null) {
+      print(
+        'No messages found for customer $currentCustomerId, trying fallback...',
+      );
+      _loadAllMessagesFallback(snapshot, userId);
+      return;
+    }
+
+    if (mounted) {
       setState(() {
-        _isLoading = false;
+        messages = allMessages;
       });
     }
   }
 
-  // Load messages for selected customer
-  void _loadMessages() {
-    if (customers.isEmpty) return;
+  // Fallback method to load all messages if customer-specific filtering fails
+  void _loadAllMessagesFallback(QuerySnapshot snapshot, String userId) {
+    print('=== FALLBACK: LOADING ALL MESSAGES ===');
+    List<Map<String, dynamic>> allMessages = [];
 
-    final customerId = customers[selectedChatIndex]['id'];
+    for (var doc in snapshot.docs) {
+      final data = doc.data() as Map<String, dynamic>;
+      final messageSenderId = data['senderId'];
+      final messageText = data['text'] ?? '';
 
-    // Load real messages from Firestore
-    _firestore
-        .collection('chats')
-        .doc(customerId)
-        .collection('messages')
-        .orderBy('timestamp', descending: false)
-        .snapshots()
-        .listen(
-          (snapshot) {
-            setState(() {
-              messages = snapshot.docs.map((doc) {
-                final data = doc.data();
-                return {
-                  'id': doc.id,
-                  'text': data['text'] ?? '',
-                  'fromMe': data['fromMe'] ?? false,
-                  'timestamp': data['timestamp'],
-                  'time': _formatTime(data['timestamp']),
-                };
-              }).toList();
-            });
-          },
-          onError: (error) {
-            print('Error loading messages: $error');
-            setState(() {
-              messages = [];
-            });
-          },
-        );
+      // Determine if this is from the current user or a customer
+      bool isFromMe = messageSenderId == userId;
+
+      print(
+        'Fallback loading: senderId=$messageSenderId, isFromMe=$isFromMe, text="$messageText"',
+      );
+
+      allMessages.add({
+        'id': doc.id,
+        'text': messageText,
+        'fromMe': isFromMe,
+        'time': _formatTime(data['createdAt']),
+        'timestamp': data['createdAt'],
+      });
+    }
+
+    print('Fallback loaded ${allMessages.length} messages');
+    if (mounted) {
+      setState(() {
+        messages = allMessages;
+      });
+    }
   }
 
-  // Format timestamp to readable time
+  // Load initial messages for the selected customer
+  Future<void> _loadInitialMessages() async {
+    if (customers.isEmpty || selectedChatIndex >= customers.length) {
+      print('No customers available for message loading');
+      return;
+    }
+
+    final customerId = customers[selectedChatIndex]['id'];
+    final user = _auth.currentUser;
+    if (user == null) {
+      print('No authenticated user');
+      return;
+    }
+
+    print('=== LOADING INITIAL MESSAGES ===');
+    print('Customer: $customerId');
+    print('Builder: $user.uid');
+    print('Source: ${customers[selectedChatIndex]['source']}');
+
+    // Check if this conversation is from the 'chats' collection
+    if (customers[selectedChatIndex]['source'] == 'chats') {
+      print('Loading from chats collection...');
+      // Load messages from chats collection
+      try {
+        final chatDocs = await _firestore
+            .collection('chats')
+            .where('builderId', isEqualTo: user.uid)
+            .where('customerId', isEqualTo: customerId)
+            .get();
+
+        print('Found ${chatDocs.docs.length} chat documents');
+        if (chatDocs.docs.isNotEmpty) {
+          final chatId = chatDocs.docs.first.id;
+          print('Loading messages from chat: $chatId');
+          await _loadChatMessages(customerId, user.uid, chatId);
+        }
+      } catch (e) {
+        print('Error loading initial chat messages: $e');
+      }
+    } else {
+      print('Loading from builder_messages collection...');
+      // Load messages from builder_messages collection
+      try {
+        final messagesSnapshot = await _firestore
+            .collection('builder_messages')
+            .get();
+
+        print(
+          'Found ${messagesSnapshot.docs.length} messages in builder_messages',
+        );
+        // Use force loading instead of filtered processing
+        _forceLoadAllMessages(messagesSnapshot, user.uid);
+      } catch (e) {
+        print('Error loading initial builder messages: $e');
+      }
+    }
+  }
+
+  // Load messages from chats collection
+  Future<void> _loadChatMessages(
+    String customerId,
+    String userId,
+    String chatId,
+  ) async {
+    print('=== LOADING CHAT MESSAGES ===');
+    print('Chat ID: $chatId');
+    print('Customer: $customerId, Builder: $userId');
+
+    try {
+      final messagesSnapshot = await _firestore
+          .collection('chats')
+          .doc(chatId)
+          .collection('messages')
+          .orderBy('timestamp', descending: false)
+          .get();
+
+      print('Found ${messagesSnapshot.docs.length} messages in chat');
+      List<Map<String, dynamic>> allMessages = [];
+
+      for (var doc in messagesSnapshot.docs) {
+        final data = doc.data();
+        final senderId = data['senderId'];
+        final text = data['text'] ?? '';
+        final isFromMe = senderId == userId;
+
+        print(
+          'Chat message: senderId=$senderId, isFromMe=$isFromMe, text="$text"',
+        );
+
+        allMessages.add({
+          'id': doc.id,
+          'text': text,
+          'fromMe': isFromMe,
+          'time': _formatTime(data['timestamp']),
+          'timestamp': data['timestamp'],
+        });
+      }
+
+      print('Loaded ${allMessages.length} messages from chat');
+      if (mounted) {
+        setState(() {
+          messages = allMessages;
+        });
+      }
+    } catch (e) {
+      print('Error loading chat messages: $e');
+    }
+  }
+
+  // Process real-time messages
+  void _processRealtimeMessages(
+    QuerySnapshot snapshot,
+    String customerId,
+    String userId,
+  ) {
+    List<Map<String, dynamic>> allMessages = [];
+
+    print('=== PROCESSING MESSAGES ===');
+    print('Looking for customer: $customerId, builder: $userId');
+    print('Total messages in snapshot: ${snapshot.docs.length}');
+
+    for (var doc in snapshot.docs) {
+      final data = doc.data() as Map<String, dynamic>;
+      final messageCustomerId = data['customerId'];
+      final messageSenderId = data['senderId'];
+      final messageSenderType = data['senderType'];
+      final messageText = data['text'] ?? '';
+
+      print(
+        'Message: customerId=$messageCustomerId, senderId=$messageSenderId, senderType=$messageSenderType, text="$messageText"',
+      );
+
+      // Check if this message is part of the conversation
+      bool isPartOfConversation = false;
+      bool isFromMe = false;
+
+      // Builder messages: sent by this builder to this customer
+      if (messageCustomerId == customerId &&
+          messageSenderId == userId &&
+          messageSenderType == 'builder') {
+        isPartOfConversation = true;
+        isFromMe = true;
+        print('✓ Found builder message: "$messageText"');
+      }
+      // Customer messages: sent by this customer (check multiple possible structures)
+      else if (messageSenderId == customerId) {
+        // This is a message from the customer - check various conditions
+        if (messageSenderType == 'customer') {
+          // Standard customer message
+          if (messageCustomerId == customerId || messageCustomerId == null) {
+            isPartOfConversation = true;
+            isFromMe = false;
+            print('✓ Found customer message: "$messageText"');
+          } else {
+            print(
+              '✗ Customer message but wrong customerId: $messageCustomerId (expected: $customerId)',
+            );
+          }
+        } else {
+          // Customer message with different senderType
+          isPartOfConversation = true;
+          isFromMe = false;
+          print(
+            '✓ Found customer message (different type): "$messageText" (senderType: $messageSenderType)',
+          );
+        }
+      } else {
+        print(
+          '✗ Message not part of conversation: senderId=$messageSenderId (expected: $customerId or $userId), senderType=$messageSenderType',
+        );
+      }
+
+      if (isPartOfConversation) {
+        allMessages.add({
+          'id': doc.id,
+          'text': data['text'] ?? '',
+          'fromMe': isFromMe,
+          'time': _formatTime(data['createdAt']),
+          'timestamp': data['createdAt'],
+        });
+      }
+    }
+
+    // Sort by timestamp (oldest first for display)
+    allMessages.sort((a, b) {
+      final aTime = a['timestamp'];
+      final bTime = b['timestamp'];
+      if (aTime == null && bTime == null) return 0;
+      if (aTime == null) return 1;
+      if (bTime == null) return -1;
+
+      if (aTime is Timestamp && bTime is Timestamp) {
+        return aTime.compareTo(bTime);
+      }
+      return 0;
+    });
+
+    print('=== FINAL RESULT ===');
+    print('Total messages found: ${allMessages.length}');
+    for (int i = 0; i < allMessages.length; i++) {
+      final msg = allMessages[i];
+      print('Message $i: fromMe=${msg['fromMe']}, text="${msg['text']}"');
+    }
+
+    if (mounted) {
+      setState(() {
+        messages = allMessages;
+      });
+    }
+  }
+
+  // Show empty state when no customers have chatted
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.chat_bubble_outline, size: 64, color: Colors.grey[400]),
+          SizedBox(height: 16),
+          Text(
+            'No conversations yet',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w500,
+              color: Colors.grey[600],
+            ),
+          ),
+          SizedBox(height: 8),
+          Text(
+            'When customers start chatting with you,\nconversations will appear here.',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 14, color: Colors.grey[500]),
+          ),
+          SizedBox(height: 20),
+          ElevatedButton(
+            onPressed: () {
+              _loadCustomers();
+            },
+            child: Text('Refresh'),
+          ),
+          SizedBox(height: 12),
+          Text(
+            'Debug: Check console for error messages',
+            style: TextStyle(fontSize: 12, color: Colors.grey[400]),
+          ),
+        ],
+      ),
+    );
+  }
+
   String _formatTime(dynamic timestamp) {
     if (timestamp == null) return '';
-    DateTime dateTime = timestamp is Timestamp
-        ? timestamp.toDate()
-        : DateTime.fromMillisecondsSinceEpoch(timestamp);
-    return '${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
+
+    DateTime dateTime;
+    if (timestamp is Timestamp) {
+      dateTime = timestamp.toDate();
+    } else if (timestamp is DateTime) {
+      dateTime = timestamp;
+    } else {
+      return '';
+    }
+
+    final now = DateTime.now();
+    final difference = now.difference(dateTime);
+
+    if (difference.inMinutes < 1) {
+      return 'Just now';
+    } else if (difference.inMinutes < 60) {
+      return '${difference.inMinutes}m ago';
+    } else if (difference.inHours < 24) {
+      return '${difference.inHours}h ago';
+    } else {
+      return '${dateTime.day}/${dateTime.month}';
+    }
   }
 
   // Send message
   Future<void> _sendMessage() async {
     if (_messageController.text.trim().isEmpty) return;
-
-    final customerId = customers[selectedChatIndex]['id'];
-    final messageText = _messageController.text.trim();
+    if (customers.isEmpty || selectedChatIndex >= customers.length) return;
 
     try {
-      // Save to Firestore
-      await _firestore
-          .collection('chats')
-          .doc(customerId)
-          .collection('messages')
-          .add({
-            'text': messageText,
-            'fromMe': true,
-            'timestamp': FieldValue.serverTimestamp(),
-          });
+      final user = _auth.currentUser;
+      if (user == null) return;
 
-      // Update customer's last message
-      await _firestore.collection('customers').doc(customerId).update({
-        'lastMessage': messageText,
-        'timestamp': FieldValue.serverTimestamp(),
-      });
+      final messageText = _messageController.text.trim();
+      final customerId = customers[selectedChatIndex]['id'];
+
+      // Check if this conversation is from the 'chats' collection
+      if (customers[selectedChatIndex]['source'] == 'chats') {
+        // Send message to chats collection
+        final chatDocs = await _firestore
+            .collection('chats')
+            .where('builderId', isEqualTo: user.uid)
+            .where('customerId', isEqualTo: customerId)
+            .get();
+
+        if (chatDocs.docs.isNotEmpty) {
+          final chatId = chatDocs.docs.first.id;
+
+          // Add message to the chat
+          await _firestore
+              .collection('chats')
+              .doc(chatId)
+              .collection('messages')
+              .add({
+                'text': messageText,
+                'senderId': user.uid,
+                'timestamp': FieldValue.serverTimestamp(),
+              });
+
+          // Update chat's last message
+          await _firestore.collection('chats').doc(chatId).update({
+            'lastMessage': messageText,
+            'lastMessageTime': FieldValue.serverTimestamp(),
+          });
+        }
+      } else {
+        // Use MessageService to send the message to builder_messages
+        await MessageService.sendMessage(
+          text: messageText,
+          category: 'general', // You might want to make this dynamic
+          senderId: user.uid,
+          senderName:
+              user.displayName ?? user.email?.split('@')[0] ?? 'Builder',
+          senderType: 'builder',
+          customerId: customerId,
+        );
+      }
 
       _messageController.clear();
+      // Real-time updates will handle showing the new message
     } catch (e) {
       print('Error sending message: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Failed to send message. Please check your connection.',
-          ),
-        ),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error sending message: $e')));
     }
   }
 
@@ -384,82 +804,88 @@ class _ChatsPageState extends State<ChatsPage> {
             ),
             // Customer List
             Expanded(
-              child: ListView.separated(
-                padding: EdgeInsets.symmetric(vertical: 8),
-                itemCount: customers.length,
-                separatorBuilder: (_, __) =>
-                    Divider(height: 1, color: Colors.grey[300]),
-                itemBuilder: (context, idx) {
-                  final customer = customers[idx];
-                  return Material(
-                    color: selectedChatIndex == idx
-                        ? Colors.blue[50]
-                        : Colors.transparent,
-                    child: ListTile(
-                      leading: Stack(
-                        children: [
-                          CircleAvatar(
-                            backgroundColor: Colors.blue[200],
-                            child: Text(
-                              customer['name'][0],
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                          if (customer['unreadCount'] > 0)
-                            Positioned(
-                              right: 0,
-                              top: 0,
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  color: Colors.redAccent,
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: 4,
-                                  vertical: 2,
-                                ),
-                                child: Text(
-                                  '${customer['unreadCount']}',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 10,
+              child: customers.isEmpty
+                  ? _buildEmptyState()
+                  : ListView.separated(
+                      padding: EdgeInsets.symmetric(vertical: 8),
+                      itemCount: customers.length,
+                      separatorBuilder: (context, index) =>
+                          Divider(height: 1, color: Colors.grey[300]),
+                      itemBuilder: (context, idx) {
+                        final customer = customers[idx];
+                        return Material(
+                          color: selectedChatIndex == idx
+                              ? Colors.blue[50]
+                              : Colors.transparent,
+                          child: ListTile(
+                            leading: Stack(
+                              children: [
+                                CircleAvatar(
+                                  backgroundColor: Colors.blue[200],
+                                  child: Text(
+                                    customer['name'][0],
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                    ),
                                   ),
                                 ),
+                                if (customer['unreadCount'] > 0)
+                                  Positioned(
+                                    right: 0,
+                                    top: 0,
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        color: Colors.redAccent,
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: 4,
+                                        vertical: 2,
+                                      ),
+                                      child: Text(
+                                        '${customer['unreadCount']}',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 10,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                            title: Text(
+                              customer['name'],
+                              style: TextStyle(
+                                fontWeight: selectedChatIndex == idx
+                                    ? FontWeight.bold
+                                    : FontWeight.normal,
+                                color: selectedChatIndex == idx
+                                    ? Colors.blue[800]
+                                    : Colors.grey[900],
                               ),
                             ),
-                        ],
-                      ),
-                      title: Text(
-                        customer['name'],
-                        style: TextStyle(
-                          fontWeight: selectedChatIndex == idx
-                              ? FontWeight.bold
-                              : FontWeight.normal,
-                          color: selectedChatIndex == idx
-                              ? Colors.blue[800]
-                              : Colors.grey[900],
-                        ),
-                      ),
-                      subtitle: Text(
-                        customer['lastMessage'],
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(fontSize: 12),
-                      ),
-                      onTap: () {
-                        setState(() {
-                          selectedChatIndex = idx;
-                        });
-                        _loadMessages(); // Reload messages for new customer
-                        Navigator.pop(context); // Close drawer after selection
+                            subtitle: Text(
+                              customer['lastMessage'],
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(fontSize: 12),
+                            ),
+                            onTap: () {
+                              setState(() {
+                                selectedChatIndex = idx;
+                              });
+                              _loadInitialMessages(); // Load existing messages first
+                              _startMessageListener(); // Start real-time listening
+                              _tryLoadAllMessages(); // Also force load all messages
+                              Navigator.pop(
+                                context,
+                              ); // Close drawer after selection
+                            },
+                          ),
+                        );
                       },
                     ),
-                  );
-                },
-              ),
             ),
           ],
         ),
@@ -469,7 +895,7 @@ class _ChatsPageState extends State<ChatsPage> {
 
   Widget _buildChatContent() {
     if (customers.isEmpty) {
-      return Center(child: CircularProgressIndicator());
+      return _buildEmptyState();
     }
 
     final customer = customers[selectedChatIndex];
@@ -521,6 +947,13 @@ class _ChatsPageState extends State<ChatsPage> {
                 onPressed: () {},
               ),
               IconButton(
+                icon: Icon(Icons.refresh, color: Colors.blue[900]),
+                onPressed: () {
+                  _tryLoadAllMessages();
+                },
+                tooltip: 'Refresh Messages',
+              ),
+              IconButton(
                 icon: Icon(Icons.more_vert, color: Colors.blue[900]),
                 onPressed: () {},
               ),
@@ -531,7 +964,9 @@ class _ChatsPageState extends State<ChatsPage> {
         Expanded(
           child: Container(
             color: Colors.white,
-            child: messages.isEmpty
+            child: customers.isEmpty
+                ? _buildEmptyState()
+                : messages.isEmpty
                 ? Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -557,6 +992,13 @@ class _ChatsPageState extends State<ChatsPage> {
                             fontSize: 14,
                           ),
                         ),
+                        SizedBox(height: 16),
+                        ElevatedButton(
+                          onPressed: () {
+                            _tryLoadAllMessages();
+                          },
+                          child: Text('Load All Messages (Debug)'),
+                        ),
                       ],
                     ),
                   )
@@ -581,8 +1023,10 @@ class _ChatsPageState extends State<ChatsPage> {
                           ),
                           decoration: BoxDecoration(
                             color: isFromMe
-                                ? Colors.blue[200]!
-                                : Colors.grey[200]!,
+                                ? Colors
+                                      .blue[600]! // Builder messages - darker blue
+                                : Colors
+                                      .green[100]!, // Customer messages - light green
                             borderRadius: BorderRadius.circular(16),
                           ),
                           child: Column(
@@ -590,15 +1034,34 @@ class _ChatsPageState extends State<ChatsPage> {
                                 ? CrossAxisAlignment.end
                                 : CrossAxisAlignment.start,
                             children: [
+                              // Add sender label
+                              Text(
+                                isFromMe ? 'You' : _getCustomerDisplayName(),
+                                style: TextStyle(
+                                  color: isFromMe
+                                      ? Colors.white70
+                                      : Colors.grey[600],
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              SizedBox(height: 2),
                               Text(
                                 messageText,
-                                style: TextStyle(color: Colors.black),
+                                style: TextStyle(
+                                  color: isFromMe ? Colors.white : Colors.black,
+                                  fontWeight: isFromMe
+                                      ? FontWeight.w500
+                                      : FontWeight.normal,
+                                ),
                               ),
                               SizedBox(height: 4),
                               Text(
                                 messageTime,
                                 style: TextStyle(
-                                  color: Colors.grey[700],
+                                  color: isFromMe
+                                      ? Colors.white70
+                                      : Colors.grey[700],
                                   fontSize: 10,
                                 ),
                               ),
@@ -619,8 +1082,10 @@ class _ChatsPageState extends State<ChatsPage> {
           ),
           child: Row(
             children: [
+              // In the _buildChatContent() method, replace the TextField with:
               Expanded(
                 child: TextField(
+                  controller: _messageController, // Add this line
                   decoration: InputDecoration(
                     hintText: "Type a message...",
                     border: OutlineInputBorder(
@@ -656,94 +1121,16 @@ class _ChatsPageState extends State<ChatsPage> {
     );
   }
 
-  Widget _buildBottomBar() {
-    return Container(
-      height: 60,
-      decoration: BoxDecoration(
-        color: Color(0xFF07122A),
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(20),
-          topRight: Radius.circular(20),
-        ),
-        boxShadow: [
-          BoxShadow(
-            blurRadius: 4,
-            color: Colors.black12,
-            offset: Offset(0, -2),
-          ),
-        ],
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: [
-          _buildNavItem(Icons.home, 'Home', () {
-            Navigator.pushNamed(context, '/');
-          }),
-          _buildNavItem(Icons.chat_bubble, 'Chats', () {
-            // Already on chats
-          }),
-          _buildNavItem(Icons.people, 'Jobs', () {
-            // Implement navigation to Jobs page
-          }),
-          _buildNavItem(Icons.person, 'Profile', () {
-            // Implement navigation to Profile page
-          }),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildNavItem(IconData icon, String label, VoidCallback onTap) {
-    return InkWell(
-      onTap: onTap,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, color: Colors.white, size: 26),
-          SizedBox(height: 4),
-          Text(
-            label,
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 13,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
+    // Always show the main content - no loading state
     return Scaffold(
       key: _scaffoldKey,
       backgroundColor: Colors.grey[100],
-      drawer: _buildDrawer(), // Mobile sidebar drawer
+      drawer: _buildDrawer(),
       body: SafeArea(
-        child: _isLoading
-            ? Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    CircularProgressIndicator(),
-                    SizedBox(height: 16),
-                    Text(
-                      'Loading conversations...',
-                      style: TextStyle(color: Colors.grey[600], fontSize: 16),
-                    ),
-                  ],
-                ),
-              )
-            : Column(
-                children: [
-                  // Main Chat Content
-                  Expanded(child: _buildChatContent()),
-                ],
-              ),
+        child: Column(children: [Expanded(child: _buildChatContent())]),
       ),
-      // Fixed Bottom Bar - independent of sidebar
-      bottomNavigationBar: _buildBottomBar(),
     );
   }
 }
