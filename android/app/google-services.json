@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "39833757641",
+    "project_id": "vd-app-fb9ad",
+    "storage_bucket": "vd-app-fb9ad.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:39833757641:android:a9ac5098952754c38dea18",
+        "android_client_info": {
+          "package_name": "com.example.vd"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBCqh6aVz2mhqq_GSJaZJqiUR0CPzlz4wc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
