@@ -233,7 +233,7 @@ class _AvailablilityPageWidgetState extends State<AvailablilityPageWidget> {
                     inactiveColor: FlutterFlowTheme.of(context).alternate,
                     min: 0,
                     max: 30,
-                    value: _model.sliderValue ??= 10,
+                    value: _model.sliderValue,
                     onChanged: (newValue) {
                       newValue = double.parse(newValue.toStringAsFixed(2));
                       safeSetState(() => _model.sliderValue = newValue);

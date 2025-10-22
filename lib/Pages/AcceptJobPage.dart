@@ -511,7 +511,7 @@ class _SuccessfulPageWidgetState extends State<SuccessfulPageWidget> {
                                                     ),
                                                 direction: Axis.horizontal,
                                                 initialRating:
-                                                    _model.ratingBarValue ??= 5,
+                                                    _model.ratingBarValue,
                                                 unratedColor:
                                                     FlutterFlowTheme.of(
                                                       context,

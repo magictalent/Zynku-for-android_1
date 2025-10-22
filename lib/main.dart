@@ -21,12 +21,15 @@ import 'Pages/PreviousPage.dart' show FinalPageWidget;
 import 'Pages/AvailbilityPage.dart' show AvailablilityPageWidget;
 import 'Pages/BookingPage.dart' show BookingPageWidget;
 import 'Pages/ChatsPage.dart' show ChatsPage;
+import 'Pages/CustomerChatsPage.dart' show CustomerChatsPage;
 import 'Pages/ProfilePage.dart' show UserdetailsWidget;
+import 'Pages/ProfilePageNew.dart' show ProfilePageNew;
 import 'Pages/JobAcceptancePage.dart' show JobAcceptancePage;
 import 'auth_wrapper.dart' show AuthWrapper;
 import 'session_manager.dart' show SessionManager;
 import 'Pages/BoardSlideShow.dart' show BoardSlideShowWidget;
 import 'widgets/page_with_bottom_nav.dart';
+import 'Pages/Maps.dart' show MapsPage;
 //
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
@@ -82,6 +85,7 @@ class MyApp extends StatelessWidget {
         '/new-job': (context) => NewjobrequirePageWidget(),
         '/payment': (context) => PaymentPageWidget(),
         '/confirm-booking': (context) => ConfirmBookingWidget(),
+        '/maps': (context) => MapsPage(),
         '/plumbing': (context) =>
             PageWithBottomNav(currentIndex: 2, child: PlumbingPageNew()),
         '/accept-job': (context) =>
@@ -96,8 +100,12 @@ class MyApp extends StatelessWidget {
         ),
         '/chats': (context) =>
             PageWithBottomNav(currentIndex: 1, child: ChatsPage()),
+        '/customer-chats': (context) =>
+            PageWithBottomNav(currentIndex: 1, child: CustomerChatsPage()),
         '/profile': (context) =>
             PageWithBottomNav(currentIndex: 3, child: UserdetailsWidget()),
+        '/profile-new': (context) =>
+            PageWithBottomNav(currentIndex: 3, child: ProfilePageNew()),
         '/job-acceptance': (context) {
           final args =
               ModalRoute.of(context)?.settings.arguments

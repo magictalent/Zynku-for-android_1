@@ -15,7 +15,8 @@ class FirebaseAuthService {
   static Future<bool> _checkNetworkConnectivity() async {
     try {
       final connectivityResult = await Connectivity().checkConnectivity();
-      return connectivityResult != ConnectivityResult.none;
+      return connectivityResult.isNotEmpty &&
+          connectivityResult.first != ConnectivityResult.none;
     } catch (e) {
       return false;
     }

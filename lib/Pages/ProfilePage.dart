@@ -1,7 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../widgets/bottom_navigation_bar.dart';
 
 class UserdetailsWidget extends StatefulWidget {
   const UserdetailsWidget({super.key});
@@ -783,12 +782,12 @@ class _UserdetailsWidgetState extends State<UserdetailsWidget>
             ],
           ),
         ),
-        bottomNavigationBar: CustomBottomNavigationBar(
-          currentIndex: 3, // Profile page index
-          onTap: (index) {
-            // Navigation is handled in the CustomBottomNavigationBar
-          },
-        ),
+        // bottomNavigationBar: CustomBottomNavigationBar(
+        //   currentIndex: 3, // Profile page index
+        //   onTap: (index) {
+        //     // Navigation is handled in the CustomBottomNavigationBar
+        //   },
+        // ),
       ),
     );
   }
